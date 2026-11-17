@@ -1,6 +1,6 @@
 /* ========================================================
-   Chiroro · Landing 首页脚本
-   背景轮换 / 实时时钟 / 随机一言 / 天气
+   ChistXiao · 个人展示页脚本
+   随机背景 / 鼠标视差 / 时钟 / 一言 / 天气 / 头像展开简介
    想改内容，基本只需要动下面的 CONFIG
    ======================================================== */
 
@@ -9,7 +9,6 @@
 
   var CONFIG = {
     // 背景图来源池：每次刷新随机取一个（尽量不与最近用过的重复）
-    // 南风 API 的 auto / pc / pe 是三个不同端点，其余为每次请求都随机的接口
     sources: [
       "https://api.sretna.cn/api/anime/auto",
       "https://api.sretna.cn/api/anime/pc",
@@ -17,10 +16,6 @@
       "https://www.loliapi.com/acg/",
       "https://t.alcy.cc/ycy"
     ],
-    // 自动轮播间隔（毫秒）；0 表示只在刷新页面时换
-    autoRotate: 0,
-    // 是否显示右下角「换一张」按钮
-    showShuffle: true,
     // 所有来源都失败时的本地兜底背景
     backgrounds: [
       "/home/bg/bg1.webp",
@@ -32,13 +27,15 @@
       "/home/bg/bg7.webp",
       "/home/bg/bg8.webp"
     ],
+    // 鼠标视差幅度（px）
+    parallax: 14,
     // 手动指定城市（留空则按 IP 自动定位）
     city: "",
     // 一言切换间隔（毫秒）
     quoteInterval: 22000,
     quotes: [
       { t: "智慧需要沉淀，积累才能够饱满。", f: "— 「铠甲勇士」" },
-      { t: "热爱可抵岁月漫长。", f: "— Chiroro" },
+      { t: "热爱可抵岁月漫长。", f: "" },
       { t: "慢一点没关系，方向对就好。", f: "" },
       { t: "把每一件小事做好，日子就有了质感。", f: "" },
       { t: "心之所向，素履以往。", f: "— 木心" },
@@ -55,20 +52,18 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
 
-  /* ------------------------- 背景轮换 ------------------------- */
+  /* ------------------------- 背景 ------------------------- */
 
   (function initBackground() {
     var layers = [document.getElementById("bgA"), document.getElementById("bgB")];
     if (!layers[0] || !layers[1]) return;
 
     var front = 0;
-    var RECENT_KEY = "chiroro-bg-recent";
-    var timer = null;
+    var RECENT_KEY = "chistxiao-bg-recent";
 
     function paint(el, url) {
       el.style.backgroundImage = "url('" + url + "')";
       el.classList.add("is-active");
-      el.classList.add("animate");
     }
 
     function swap(url) {
@@ -100,16 +95,15 @@
       } catch (e) { /* 隐私模式忽略 */ }
     }
 
-    // 先把最近用过的来源排到最后，保证刷新后换一张
+    // 最近用过的来源排到最后，保证刷新后换一张
     function pickOrder() {
       var recent = readRecent();
       var fresh = CONFIG.sources.filter(function (s) { return recent.indexOf(s) === -1; });
       var stale = CONFIG.sources.filter(function (s) { return recent.indexOf(s) !== -1; });
-      var order = shuffle(fresh).concat(shuffle(stale));
-      return order.length ? order : shuffle(CONFIG.sources);
+      return shuffle(fresh).concat(shuffle(stale));
     }
 
-    // 预加载一张图：成功回调 url，失败/超时回调空
+    // 预加载成功再切换，避免闪白
     function preload(source, done) {
       var url = source + (source.indexOf("?") > -1 ? "&" : "?") + "t=" + Date.now().toString(36);
       var img = new Image();
@@ -138,18 +132,15 @@
       img.src = url;
     }
 
-    function nextLocal() {
-      return CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)] || "";
-    }
-
-    // 按随机顺序依次尝试来源，直到有一张加载成功
     function loadOne() {
       var order = pickOrder();
       var i = 0;
 
       function attempt() {
         if (i >= order.length) {
-          swap(nextLocal());
+          if (CONFIG.backgrounds.length) {
+            swap(CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)]);
+          }
           return;
         }
         var source = order[i++];
@@ -166,21 +157,37 @@
       attempt();
     }
 
-    // 首屏保持深色底，等随机图的加载完成后再淡入，避免先闪一张兜底图
-    setTimeout(loadOne, 150);
-    if (CONFIG.autoRotate > 0) {
-      timer = setInterval(loadOne, CONFIG.autoRotate);
-    }
+    // 首屏保持深色底，随机图加载完成后淡入
+    loadOne();
 
-    var btn = document.getElementById("shuffle");
-    if (btn) {
-      if (!CONFIG.showShuffle) {
-        btn.hidden = true;
-      } else {
-        btn.addEventListener("click", function () {
-          loadOne();
-        });
+    /* 鼠标视差：整层背景轻微位移 */
+    if (!reduceMotion) {
+      var targetX = 0, targetY = 0, currentX = 0, currentY = 0, ticking = false;
+
+      function apply() {
+        currentX += (targetX - currentX) * 0.12;
+        currentY += (targetY - currentY) * 0.12;
+        var root = document.documentElement;
+        root.style.setProperty("--px", currentX.toFixed(2) + "px");
+        root.style.setProperty("--py", currentY.toFixed(2) + "px");
+
+        if (Math.abs(targetX - currentX) > 0.2 || Math.abs(targetY - currentY) > 0.2) {
+          requestAnimationFrame(apply);
+        } else {
+          ticking = false;
+        }
       }
+
+      window.addEventListener("mousemove", function (e) {
+        var nx = e.clientX / window.innerWidth - 0.5;
+        var ny = e.clientY / window.innerHeight - 0.5;
+        targetX = -nx * CONFIG.parallax * 2;
+        targetY = -ny * CONFIG.parallax * 2;
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(apply);
+        }
+      }, { passive: true });
     }
   })();
 
@@ -221,7 +228,6 @@
       if (elFrom) elFrom.textContent = item.f || "";
     }
 
-    // 首屏直接渲染，避免淡入过程中空白
     render(last);
 
     function show(index) {
@@ -238,13 +244,34 @@
     }, CONFIG.quoteInterval);
   })();
 
+  /* ------------------------- 头像展开简介 ------------------------- */
+
+  (function initNote() {
+    var avatar = document.getElementById("avatar");
+    var note = document.getElementById("note");
+    if (!avatar || !note) return;
+
+    function toggle(open) {
+      var next = typeof open === "boolean" ? open : !note.classList.contains("is-open");
+      note.classList.toggle("is-open", next);
+      avatar.setAttribute("aria-expanded", String(next));
+      avatar.setAttribute("aria-label", next ? "收起简介" : "展开简介");
+    }
+
+    avatar.addEventListener("click", function () { toggle(); });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") toggle(false);
+    });
+  })();
+
   /* ------------------------- 天气 ------------------------- */
 
   (function initWeather() {
     var el = document.getElementById("weather");
     if (!el) return;
 
-    // 常见城市拼音 → 中文，命中就显示中文，未命中显示原文
+    // 常见城市拼音 → 中文，命中就显示中文
     var CITY_ZH = {
       Beijing: "北京", Shanghai: "上海", Guangzhou: "广州", Shenzhen: "深圳", Tianjin: "天津",
       Chongqing: "重庆", Chengdu: "成都", Hangzhou: "杭州", Nanjing: "南京", Wuhan: "武汉",
@@ -257,28 +284,7 @@
       Foshan: "佛山", Zhuhai: "珠海", Zhongshan: "中山", Huizhou: "惠州", Luoyang: "洛阳"
     };
 
-    var cache = null;
-
-    function getJSON(url, timeout) {
-      return new Promise(function (resolve, reject) {
-        var ctrl = window.AbortController ? new AbortController() : null;
-        var t = setTimeout(function () { if (ctrl) ctrl.abort(); reject(new Error("timeout")); }, timeout || 9000);
-        fetch(url, ctrl ? { signal: ctrl.signal } : {})
-          .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("http " + r.status)); })
-          .then(function (d) { clearTimeout(t); resolve(d); })
-          .catch(function (e) { clearTimeout(t); reject(e); });
-      });
-    }
-
-    function render(city, desc, temp) {
-      var parts = [];
-      if (city) parts.push(city);
-      if (desc) parts.push(desc);
-      parts.push(temp + "°C");
-      el.textContent = parts.join(" · ");
-    }
-
-    var CACHE_KEY = "chiroro-weather";
+    var CACHE_KEY = "chistxiao-weather";
     var CACHE_TTL = 30 * 60 * 1000;
 
     function readCache() {
@@ -295,10 +301,21 @@
       try {
         obj.at = Date.now();
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(obj));
-      } catch (e) { /* 隐私模式下忽略 */ }
+      } catch (e) { /* 隐私模式忽略 */ }
     }
 
-    // 依次尝试多个定位服务，任意一个成功即可，避免单一服务被限流
+    function getJSON(url, timeout) {
+      return new Promise(function (resolve, reject) {
+        var ctrl = window.AbortController ? new AbortController() : null;
+        var t = setTimeout(function () { if (ctrl) ctrl.abort(); reject(new Error("timeout")); }, timeout || 9000);
+        fetch(url, ctrl ? { signal: ctrl.signal } : {})
+          .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("http " + r.status)); })
+          .then(function (d) { clearTimeout(t); resolve(d); })
+          .catch(function (e) { clearTimeout(t); reject(e); });
+      });
+    }
+
+    // 依次尝试多个定位服务，任意一个成功即可
     var LOCATORS = [
       function () {
         return getJSON("https://ipwho.is/", 6000).then(function (d) {
@@ -328,6 +345,14 @@
         return LOCATORS[i++]().catch(attempt);
       }
       return attempt();
+    }
+
+    function render(city, desc, temp) {
+      var parts = [];
+      if (city) parts.push(city);
+      if (desc) parts.push(desc);
+      parts.push(temp + "°C");
+      el.textContent = parts.join(" · ");
     }
 
     function describe(cur) {
