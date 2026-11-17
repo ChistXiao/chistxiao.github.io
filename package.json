@@ -4,8 +4,8 @@
   "private": true,
   "description": "ChistXiao 的个人展示页",
   "scripts": {
-    "build": "node scripts/fetch-quotes.js && hexo generate",
-    "quotes": "node scripts/fetch-quotes.js",
+    "build": "node tools/fetch-quotes.js && hexo generate",
+    "quotes": "node tools/fetch-quotes.js",
     "clean": "hexo clean",
     "server": "hexo server"
   },
