@@ -8,13 +8,11 @@
   "use strict";
 
   var CONFIG = {
-    // 背景图来源池：每次刷新随机取一个（尽量不与最近用过的重复）
+    // 背景图来源池：每次刷新随机取一个（接口失败会依次换，最后用本地图兜底）
     sources: [
-      "https://api.sretna.cn/api/anime/auto",
-      "https://api.sretna.cn/api/anime/pc",
-      "https://api.sretna.cn/api/anime/pe",
-      "https://www.loliapi.com/acg/",
-      "https://t.alcy.cc/ycy"
+      "https://api.rls.ovh/api/anime/auto",
+      "https://api.rls.ovh/api/anime/pc",
+      "https://api.rls.ovh/api/anime/pe"
     ],
     // 所有来源都失败时的本地兜底背景
     backgrounds: [
@@ -135,19 +133,33 @@
     function loadOne() {
       var order = pickOrder();
       var i = 0;
+      var applied = false;
+
+      function applyFallback() {
+        if (applied || !CONFIG.backgrounds.length) return;
+        applied = true;
+        swap(CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)]);
+      }
+
+      // 接口慢或全挂时，先本地图顶上，避免长时间空背景
+      var guard = setTimeout(applyFallback, 5000);
 
       function attempt() {
         if (i >= order.length) {
-          if (CONFIG.backgrounds.length) {
-            swap(CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)]);
-          }
+          clearTimeout(guard);
+          applyFallback();
           return;
         }
         var source = order[i++];
         preload(source, function (url) {
           if (url) {
+            clearTimeout(guard);
+            applied = true;
             remember(source);
             swap(url);
+          } else if (applied) {
+            // 已经用本地图顶上，就不再继续尝试，省得来回切换
+            clearTimeout(guard);
           } else {
             attempt();
           }
@@ -262,6 +274,52 @@
 
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") toggle(false);
+    });
+  })();
+
+  /* ------------------------- 邮箱一键复制 ------------------------- */
+
+  (function initCopyEmail() {
+    var btn = document.getElementById("copyEmail");
+    var toast = document.getElementById("toast");
+    if (!btn) return;
+
+    var text = btn.getAttribute("data-copy") || "";
+    var timer = null;
+
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add("is-visible");
+      clearTimeout(timer);
+      timer = setTimeout(function () { toast.classList.remove("is-visible"); }, 1900);
+    }
+
+    // 老浏览器 / 非安全上下文的兜底
+    function legacyCopy(str) {
+      var ta = document.createElement("textarea");
+      ta.value = str;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    function ok() { showToast("已复制邮箱：" + text); }
+    function fail() { showToast("复制失败，请手动复制：" + text); }
+
+    btn.addEventListener("click", function () {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(ok, function () {
+          legacyCopy(text) ? ok() : fail();
+        });
+      } else {
+        legacyCopy(text) ? ok() : fail();
+      }
     });
   })();
 

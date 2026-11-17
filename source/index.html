@@ -39,9 +39,11 @@
           </a>
         </li>
         <li>
-          <a href="mailto:3360400800@qq.com" aria-label="邮箱" title="3360400800@qq.com">
+          <button class="social-btn" id="copyEmail" type="button"
+                  data-copy="3360400800@qq.com"
+                  aria-label="复制邮箱 3360400800@qq.com" title="点击复制邮箱">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>
-          </a>
+          </button>
         </li>
       </ul>
     </section>
@@ -76,6 +78,8 @@
   </main>
 
   <footer class="foot">© 2026 ChistXiao</footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="/home/landing.js" defer></script>
 </body>
