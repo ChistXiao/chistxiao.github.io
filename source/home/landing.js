@@ -133,33 +133,14 @@
     function loadOne() {
       var order = pickOrder();
       var i = 0;
-      var applied = false;
-
-      function applyFallback() {
-        if (applied || !CONFIG.backgrounds.length) return;
-        applied = true;
-        swap(CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)]);
-      }
-
-      // 接口慢或全挂时，先本地图顶上，避免长时间空背景
-      var guard = setTimeout(applyFallback, 5000);
 
       function attempt() {
-        if (i >= order.length) {
-          clearTimeout(guard);
-          applyFallback();
-          return;
-        }
+        if (i >= order.length) return; // 全部失败就保持当前（本地）背景
         var source = order[i++];
         preload(source, function (url) {
           if (url) {
-            clearTimeout(guard);
-            applied = true;
             remember(source);
             swap(url);
-          } else if (applied) {
-            // 已经用本地图顶上，就不再继续尝试，省得来回切换
-            clearTimeout(guard);
           } else {
             attempt();
           }
@@ -169,7 +150,12 @@
       attempt();
     }
 
-    // 首屏保持深色底，随机图加载完成后淡入
+    // 首屏立刻用本地图，避免等接口（接口不通时不至于长时间空屏）
+    if (CONFIG.backgrounds.length) {
+      swap(CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)]);
+    }
+
+    // 再尝试接口，成功则淡入替换成本地图
     loadOne();
 
     /* 鼠标视差：整层背景轻微位移 */
