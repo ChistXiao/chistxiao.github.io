@@ -30,11 +30,7 @@
         <img src="/home/avatar.png" alt="ChistXiao">
       </button>
 
-      <h1 class="brand-h">
-        <button class="brand" id="nameBtn" type="button"
-                aria-expanded="false" aria-controls="progress"
-                aria-label="查看时间进度">ChistXiao</button>
-      </h1>
+      <h1 class="brand">ChistXiao</h1>
 
       <ul class="socials">
         <li>
@@ -66,7 +62,9 @@
         <p class="quote-from" id="quoteFrom"></p>
       </article>
 
-      <article class="card clock-card" aria-label="时间与天气">
+      <article class="card clock-card" id="clockCard" role="button" tabindex="0"
+               aria-expanded="false" aria-controls="progress"
+               aria-label="时间，点击查看今年进度" title="点击查看时间进度">
         <p class="date" id="date">—</p>
         <p class="clock" id="clock">--:--:--</p>
         <p class="weather" id="weather"></p>
@@ -78,7 +76,7 @@
         <p class="note-body">一个喜欢折腾的人</p>
         <p class="note-body">如果你能看见这个  那我们大概已经认识<br>这里是我的blog主页  目前是一个简单的展示页<br>欢迎通过头像下面的方式找到我</p>
         <p class="note-ps">ps:联系不到也很正常  平时大多数时间在QQ水群...</p>
-        <p class="note-hint">再点一下头像关闭</p>
+        <p class="note-hint">点击空白处关闭</p>
       </div>
 
       <!-- 点击名字后覆盖在右侧控件上的时间进度 -->
@@ -99,6 +97,7 @@
           <div class="prog-head"><span class="prog-title">本年已度过 <b>0</b> 天</span><span class="prog-rest">剩余 365 天</span></div>
           <div class="prog-bar"><span class="prog-fill"></span><span class="prog-label">0%</span></div>
         </div>
+        <p class="note-hint">点击空白处关闭</p>
       </div>
 
     </section>

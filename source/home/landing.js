@@ -321,7 +321,7 @@
 
   (function initPanels() {
     var avatar = document.getElementById("avatar");
-    var nameBtn = document.getElementById("nameBtn");
+    var clockCard = document.getElementById("clockCard");
     var note = document.getElementById("note");
     var progress = document.getElementById("progress");
     if (!note || !progress) return;
@@ -329,7 +329,7 @@
     var cards = [note, progress];
     var buttons = {};
     if (avatar) buttons.note = avatar;
-    if (nameBtn) buttons.progress = nameBtn;
+    if (clockCard) buttons.progress = clockCard;
 
     function setOpen(target, open) {
       target.classList.toggle("is-open", open);
@@ -349,9 +349,34 @@
     }
 
     avatar && avatar.addEventListener("click", function () { toggle(note); });
-    nameBtn && nameBtn.addEventListener("click", function () {
+
+    function openProgress() {
       toggle(progress);
       if (progress.classList.contains("is-open")) startTicking();
+    }
+
+    if (clockCard) {
+      clockCard.addEventListener("click", openProgress);
+      clockCard.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openProgress();
+        }
+      });
+    }
+
+    // 点开二级面板后，点击其他任意位置即可关闭（不用再点原控件）
+    function anyOpen() {
+      return note.classList.contains("is-open") || progress.classList.contains("is-open");
+    }
+
+    document.addEventListener("click", function (e) {
+      if (!anyOpen()) return;
+      var t = e.target;
+      if (note.contains(t) || progress.contains(t)) return;
+      if (avatar && avatar.contains(t)) return;
+      if (clockCard && clockCard.contains(t)) return;
+      cards.forEach(function (el) { setOpen(el, false); });
     });
 
     document.addEventListener("keydown", function (e) {

@@ -133,34 +133,15 @@ body {
   outline-offset: 6px;
 }
 
-.brand-h { margin: 0; }
-
 .brand {
-  display: inline-block;
   margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  cursor: pointer;
   font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", "Segoe Print", cursive;
   font-size: clamp(40px, 5.2vw, 66px);
   font-weight: 400;
   line-height: 1.15;
   letter-spacing: 0.01em;
   text-shadow: 0 8px 34px rgba(0, 0, 0, 0.5);
-  transition: transform 0.35s var(--ease), text-shadow 0.35s;
-}
-
-.brand:hover {
-  transform: translateY(-2px) scale(1.02);
-  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-}
-
-.brand:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.85);
-  outline-offset: 8px;
-  border-radius: 10px;
+  user-select: none;
 }
 
 /* 三个社交圆钮 */
@@ -286,7 +267,10 @@ body {
 .clock-card {
   padding: 22px 24px 20px;
   text-align: center;
+  cursor: pointer;
 }
+
+.clock-card:active { transform: translateY(-1px); }
 
 .date {
   margin: 0;
