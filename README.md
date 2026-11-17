@@ -43,6 +43,14 @@ pnpm run build   # 生成到 public/
 - **一言**：`https://www.moey.cn/yan/?type=json&form=all`。这个接口**没有 CORS 头**，浏览器直连会被拦，所以改为**构建时抓取**：`pnpm run build` 会先跑 `scripts/fetch-quotes.js` 抓 40 条写入 `source/home/quotes.json`，页面再从本地 JSON 随机取。每次部署都会刷新这批句子；接口挂掉时保留上一次的文件。
 - 点击一言卡片（或聚焦后按回车/空格）随机换下一句。
 
+## 字体
+
+标题的 `ChistXiao` 用 Comic Sans 风格字体：`font-family: "Comic Sans MS", "Comic Relief", "Comic Sans", cursive`。
+
+Comic Sans MS 是微软商业字体、不能打包分发，所以自托管了开源的 **Comic Relief**（SIL OFL，按 Comic Sans 字宽复刻，约 18KB）作为兜底：Windows / macOS 用系统自带的 Comic Sans MS，Android / Linux 等设备用自托管的 Comic Relief，两边观感基本一致。
+
+字体文件在 `source/home/fonts/comic-relief-400.woff2`，想强制全平台统一就把 `landing.css` 里 `.brand` 的字体栈把 `"Comic Relief"` 挪到第一位。
+
 ## 结构
 
 ```
