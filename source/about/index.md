@@ -3,7 +3,7 @@ title: 关于
 layout: about
 ---
 
-你好，我是 **Chitciao** 👋
+你好，我是 **ChistXiao** 👋
 
 这里是我的个人博客，用来记录技术笔记、生活片段和一切值得留下的想法。
 

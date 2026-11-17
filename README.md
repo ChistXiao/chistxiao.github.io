@@ -2,8 +2,8 @@
 
 基于 [Hexo](https://hexo.io) + [Fluid](https://github.com/fluid-dev/hexo-theme-fluid) 主题的个人博客，通过 **GitHub Actions** 自动构建并发布到 **GitHub Pages**。
 
-- 站点地址：<https://chitciao.github.io>
-- 源码仓库：<https://github.com/chitciao/chitciao.github.io>
+- 站点地址：<https://chistxiao.github.io>
+- 源码仓库：<https://github.com/chistxiao/chistxiao.github.io>
 
 ## 本地开发
 
@@ -52,7 +52,7 @@ git commit -m "post: 新文章标题"
 git push
 ```
 
-几十秒后访问 <https://chitciao.github.io> 即可看到更新。部署进度可以在仓库的 **Actions** 标签页查看。
+几十秒后访问 <https://chistxiao.github.io> 即可看到更新。部署进度可以在仓库的 **Actions** 标签页查看。
 
 ## 目录结构
 
@@ -81,6 +81,6 @@ git push
 
 ## 注意
 
-- 仓库必须命名为 `<用户名>.github.io`（本仓库为 `chitciao.github.io`）才能使用根域名访问。
+- 仓库必须命名为 `<用户名>.github.io`（本仓库为 `chistxiao.github.io`）才能使用根域名访问。
 - GitHub Pages 的发布来源需设置为 **GitHub Actions**（Settings → Pages → Build and deployment → Source）。
 - `public/` 和 `node_modules/` 已被 `.gitignore` 忽略，不需要提交。

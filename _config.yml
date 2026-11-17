@@ -7,13 +7,13 @@ title: Chiroro
 subtitle: '记录 · 思考 · 折腾'
 description: '一个用 Hexo 搭建的个人博客，记录技术、生活与思考。'
 keywords: hexo, blog, 技术, 生活
-author: Chitciao
+author: ChistXiao
 language: zh-CN
 timezone: 'Asia/Shanghai'
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: https://chitciao.github.io
+url: https://chistxiao.github.io
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
