@@ -29,9 +29,10 @@ pnpm run clean   # 清除缓存和 public/
 
 | 想改什么 | 改哪里 |
 | --- | --- |
-| 背景图接口 | `source/home/landing.js` → `CONFIG.api`（默认 `https://api.sretna.cn/api/anime/auto`，返回图片本身） |
-| 接口失败时的兜底图 / 首屏图 | `source/home/bg/bg1.webp ~ bg8.webp`，或 `CONFIG.backgrounds` |
-| 背景切换间隔 | `CONFIG.interval`（毫秒，默认 13000） |
+| 背景图来源池 | `source/home/landing.js` → `CONFIG.sources`（默认含南风 API 的 `auto`/`pc`/`pe` 与两个随机图接口） |
+| 是否自动轮播 | `CONFIG.autoRotate`（`0` = 只在刷新页面时换一张，默认） |
+| 「换一张」按钮 | `CONFIG.showShuffle`（`false` 可隐藏） |
+| 全部来源失败时的兜底图 | `source/home/bg/bg1.webp ~ bg8.webp`，或 `CONFIG.backgrounds` |
 | 一言内容 | `CONFIG.quotes`（`t` 正文，`f` 出处） |
 | 一言切换间隔 | `CONFIG.quoteInterval` |
 | 天气城市（留空=按 IP 自动定位） | `CONFIG.city` |
@@ -40,10 +41,11 @@ pnpm run clean   # 清除缓存和 public/
 
 实现要点：
 
-- 背景两层交替淡入，每次切换都会向接口请求一张新图，**先在内存里加载成功再切换**，避免闪白；接口超时（9s）或失败时自动用本地 `bgN.webp` 兜底。
+- **每次刷新随机取一张背景**：从 `CONFIG.sources` 里随机挑一个来源，用 `sessionStorage` 记录最近 4 次用过的来源，刷新时优先选没用过的，避免连续重复。图片**先在内存里预加载成功再淡入**，不会闪白；某个来源超时（10s）或失败会自动换下一个，全部失败才用本地 `bgN.webp`。
+- 默认关闭自动轮播（`autoRotate: 0`）；想恢复定时换图把它改成毫秒数（如 `30000`）即可，右下角「换一张」按钮随时可手动换。
 - 天气：先按 IP 依次尝试 `ipwho.is` → `api.ipapi.is` → `ipinfo.io` 定位，再用 `wttr.in` 取当前天气；结果在 `sessionStorage` 缓存 30 分钟，失败就留空不影响页面。
-- 时钟、日期、一言都是纯前端，不需要任何后端。
-- 支持 `prefers-reduced-motion`（关闭缩放动画）和键盘焦点样式。
+- 毛玻璃：`backdrop-filter: blur(26px) saturate(135%)`。注意**不要**给玻璃元素的父级加 `animation ... both`、`transform`、`opacity < 1` 之类的属性，否则会形成新的 backdrop root，模糊会直接失效（本项目踩过这个坑，入场动画已改成无 `fill-mode`）。
+- 时钟、日期、一言都是纯前端，不需要任何后端；支持 `prefers-reduced-motion` 和键盘焦点样式。
 
 ## 写一篇新文章
 

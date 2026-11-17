@@ -8,9 +8,20 @@
   "use strict";
 
   var CONFIG = {
-    // 随机二次元背景接口（返回图片本身）；留空则只用下面的本地背景
-    api: "https://api.sretna.cn/api/anime/auto",
-    // 接口超时 / 失败时的本地兜底背景，首屏也会先用它立即出画面
+    // 背景图来源池：每次刷新随机取一个（尽量不与最近用过的重复）
+    // 南风 API 的 auto / pc / pe 是三个不同端点，其余为每次请求都随机的接口
+    sources: [
+      "https://api.sretna.cn/api/anime/auto",
+      "https://api.sretna.cn/api/anime/pc",
+      "https://api.sretna.cn/api/anime/pe",
+      "https://www.loliapi.com/acg/",
+      "https://t.alcy.cc/ycy"
+    ],
+    // 自动轮播间隔（毫秒）；0 表示只在刷新页面时换
+    autoRotate: 0,
+    // 是否显示右下角「换一张」按钮
+    showShuffle: true,
+    // 所有来源都失败时的本地兜底背景
     backgrounds: [
       "/home/bg/bg1.webp",
       "/home/bg/bg2.webp",
@@ -21,8 +32,6 @@
       "/home/bg/bg7.webp",
       "/home/bg/bg8.webp"
     ],
-    // 自动切换间隔（毫秒）
-    interval: 13000,
     // 手动指定城市（留空则按 IP 自动定位）
     city: "",
     // 一言切换间隔（毫秒）
@@ -52,8 +61,8 @@
     var layers = [document.getElementById("bgA"), document.getElementById("bgB")];
     if (!layers[0] || !layers[1]) return;
 
-    var front = 0;      // 当前正在显示的层
-    var localIdx = 0;   // 本地兜底图的游标
+    var front = 0;
+    var RECENT_KEY = "chiroro-bg-recent";
     var timer = null;
 
     function paint(el, url) {
@@ -70,24 +79,39 @@
       front = back;
     }
 
-    // 首屏：先用本地图，保证第一眼就有画面
-    if (CONFIG.backgrounds.length) {
-      paint(layers[0], CONFIG.backgrounds[0]);
-      front = 0;
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
     }
 
-    function nextLocal() {
-      if (!CONFIG.backgrounds.length) return "";
-      localIdx = (localIdx + 1) % CONFIG.backgrounds.length;
-      return CONFIG.backgrounds[localIdx];
+    function readRecent() {
+      try { return JSON.parse(sessionStorage.getItem(RECENT_KEY) || "[]"); } catch (e) { return []; }
     }
 
-    // 请求接口，预加载成功后回调；超时或失败回调空，由调用方兜底
-    function requestRemote(done) {
-      if (!CONFIG.api) return done("");
+    function remember(source) {
+      try {
+        var list = readRecent().filter(function (s) { return s !== source; });
+        list.unshift(source);
+        sessionStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 4)));
+      } catch (e) { /* 隐私模式忽略 */ }
+    }
 
-      var url = CONFIG.api + (CONFIG.api.indexOf("?") > -1 ? "&" : "?") +
-        "r=" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    // 先把最近用过的来源排到最后，保证刷新后换一张
+    function pickOrder() {
+      var recent = readRecent();
+      var fresh = CONFIG.sources.filter(function (s) { return recent.indexOf(s) === -1; });
+      var stale = CONFIG.sources.filter(function (s) { return recent.indexOf(s) !== -1; });
+      var order = shuffle(fresh).concat(shuffle(stale));
+      return order.length ? order : shuffle(CONFIG.sources);
+    }
+
+    // 预加载一张图：成功回调 url，失败/超时回调空
+    function preload(source, done) {
+      var url = source + (source.indexOf("?") > -1 ? "&" : "?") + "t=" + Date.now().toString(36);
       var img = new Image();
       var settled = false;
 
@@ -95,7 +119,7 @@
         if (settled) return;
         settled = true;
         done("");
-      }, 9000);
+      }, 10000);
 
       img.onload = function () {
         if (settled) return;
@@ -114,34 +138,50 @@
       img.src = url;
     }
 
-    function tick() {
-      requestRemote(function (url) {
-        swap(url || nextLocal());
-      });
+    function nextLocal() {
+      return CONFIG.backgrounds[Math.floor(Math.random() * CONFIG.backgrounds.length)] || "";
     }
 
-    function restart() {
-      clearInterval(timer);
-      timer = setInterval(tick, CONFIG.interval);
+    // 按随机顺序依次尝试来源，直到有一张加载成功
+    function loadOne() {
+      var order = pickOrder();
+      var i = 0;
+
+      function attempt() {
+        if (i >= order.length) {
+          swap(nextLocal());
+          return;
+        }
+        var source = order[i++];
+        preload(source, function (url) {
+          if (url) {
+            remember(source);
+            swap(url);
+          } else {
+            attempt();
+          }
+        });
+      }
+
+      attempt();
     }
 
-    // 首屏稳定后马上换一张接口随机图
-    setTimeout(function () {
-      tick();
-      restart();
-    }, 800);
+    // 首屏保持深色底，等随机图的加载完成后再淡入，避免先闪一张兜底图
+    setTimeout(loadOne, 150);
+    if (CONFIG.autoRotate > 0) {
+      timer = setInterval(loadOne, CONFIG.autoRotate);
+    }
 
     var btn = document.getElementById("shuffle");
     if (btn) {
-      btn.addEventListener("click", function () {
-        tick();
-        restart();
-      });
+      if (!CONFIG.showShuffle) {
+        btn.hidden = true;
+      } else {
+        btn.addEventListener("click", function () {
+          loadOne();
+        });
+      }
     }
-
-    document.addEventListener("visibilitychange", function () {
-      if (!document.hidden) restart();
-    });
   })();
 
   /* ------------------------- 时钟 ------------------------- */
