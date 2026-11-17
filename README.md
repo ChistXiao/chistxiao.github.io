@@ -1,9 +1,13 @@
 # Chiroro · 个人博客
 
-基于 [Hexo](https://hexo.io) + [Fluid](https://github.com/fluid-dev/hexo-theme-fluid) 主题的个人博客，通过 **GitHub Actions** 自动构建并发布到 **GitHub Pages**。
+基于 [Hexo](https://hexo.io) + [Fluid](https://github.com/fluid-dev/hexo-theme-fluid) 主题的个人博客。
+
+首页是一张独立的二次元风格 Landing 页（全屏随机背景 + 毛玻璃控件），文章列表在 `/blog/`，其余页面沿用 Fluid 主题。
+通过 **GitHub Actions** 自动构建并发布到 **GitHub Pages**。
 
 - 站点地址：<https://chistxiao.github.io>
 - 源码仓库：<https://github.com/chistxiao/chistxiao.github.io>
+- 文章列表：<https://chistxiao.github.io/blog/>
 
 ## 本地开发
 
@@ -20,6 +24,26 @@ pnpm run server  # 本地预览 http://localhost:4000，改动能热更新
 pnpm run build   # 生成静态站点到 public/
 pnpm run clean   # 清除缓存和 public/
 ```
+
+## 首页（Landing）
+
+| 想改什么 | 改哪里 |
+| --- | --- |
+| 背景图接口 | `source/home/landing.js` → `CONFIG.api`（默认 `https://api.sretna.cn/api/anime/auto`，返回图片本身） |
+| 接口失败时的兜底图 / 首屏图 | `source/home/bg/bg1.webp ~ bg8.webp`，或 `CONFIG.backgrounds` |
+| 背景切换间隔 | `CONFIG.interval`（毫秒，默认 13000） |
+| 一言内容 | `CONFIG.quotes`（`t` 正文，`f` 出处） |
+| 一言切换间隔 | `CONFIG.quoteInterval` |
+| 天气城市（留空=按 IP 自动定位） | `CONFIG.city` |
+| 名字 / 头像 / 标语 / 快捷入口 | `source/index.html` |
+| 配色、毛玻璃、圆角、字体大小 | `source/home/landing.css` |
+
+实现要点：
+
+- 背景两层交替淡入，每次切换都会向接口请求一张新图，**先在内存里加载成功再切换**，避免闪白；接口超时（9s）或失败时自动用本地 `bgN.webp` 兜底。
+- 天气：先按 IP 依次尝试 `ipwho.is` → `api.ipapi.is` → `ipinfo.io` 定位，再用 `wttr.in` 取当前天气；结果在 `sessionStorage` 缓存 30 分钟，失败就留空不影响页面。
+- 时钟、日期、一言都是纯前端，不需要任何后端。
+- 支持 `prefers-reduced-motion`（关闭缩放动画）和键盘焦点样式。
 
 ## 写一篇新文章
 
@@ -40,11 +64,11 @@ categories:
 ---
 ```
 
-正文用 Markdown 写，`<!-- more -->` 之前的内容会作为首页摘要。
+正文用 Markdown 写，`<!-- more -->` 之前的内容会作为摘要。
 
 ## 发布（自动）
 
-只要把源码推送到 `main` 分支，GitHub Actions 就会自动构建并部署：
+把源码推送到 `main` 分支，GitHub Actions 会自动构建并部署：
 
 ```bash
 git add .
@@ -58,29 +82,38 @@ git push
 
 ```
 ├── .github/workflows/pages.yml   # GitHub Actions 自动部署
-├── _config.yml                   # 站点主配置（标题、网址、主题等）
-├── _config.fluid.yml             # Fluid 主题配置（导航、首页、关于页、页脚等）
+├── _config.yml                   # 站点主配置（标题、网址、主题、文章列表位置）
+├── _config.fluid.yml             # Fluid 主题配置（导航、页脚、关于页等）
 ├── scaffolds/                    # 新建文章/页面的模板
 ├── source/
+│   ├── index.html                # 首页 Landing（skip_render，不经过主题）
+│   ├── home/                     # Landing 的样式/脚本/背景/字体
+│   │   ├── landing.css
+│   │   ├── landing.js            # CONFIG：背景接口、一言、天气
+│   │   ├── avatar.png
+│   │   ├── bg/bg1-8.webp         # 兜底背景
+│   │   └── fonts/                # 手写体字体（本地托管）
 │   ├── _posts/                   # 文章（Markdown）
 │   ├── about/                    # 关于页
-│   └── img/                      # 图片资源（头像、图标）
-└── themes/                       # 主题目录（当前用 npm 安装的 Fluid）
+│   └── img/                      # 其它图片资源
+└── themes/                       # 主题目录（Fluid 通过 npm 安装）
 ```
 
-## 常用自定义位置
+> 首页是 `source/index.html`，所以 `.gitignore` 里的 `public/` 不需要提交；文章列表由 `_config.yml` 的 `index_generator.path: 'blog'` 指到了 `/blog/`。
+
+## 其它自定义位置
 
 | 想改什么 | 改哪里 |
 | --- | --- |
 | 站点标题 / 副标题 / 作者 | `_config.yml` 开头的 `title`、`subtitle`、`author` |
 | 导航栏菜单 | `_config.fluid.yml` → `navbar.menu` |
-| 首页标语 | `_config.fluid.yml` → `index.slogan.text` |
-| 头像 | 替换 `source/img/avatar.png` |
+| 文章页页脚版权 | `_config.fluid.yml` → `footer.content` |
 | 关于页内容 | `source/about/index.md` |
-| 页脚版权 | `_config.fluid.yml` → `footer.content` |
+| 头像 | 替换 `source/home/avatar.png`（主题页面也引用这个路径） |
 
 ## 注意
 
 - 仓库必须命名为 `<用户名>.github.io`（本仓库为 `chistxiao.github.io`）才能使用根域名访问。
 - GitHub Pages 的发布来源需设置为 **GitHub Actions**（Settings → Pages → Build and deployment → Source）。
 - `public/` 和 `node_modules/` 已被 `.gitignore` 忽略，不需要提交。
+- 首页背景接口 `api.sretna.cn` 是第三方公开接口，若某天不可用，页面会自动回退到本地背景图，不影响访问。

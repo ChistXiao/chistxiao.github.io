@@ -1,0 +1,411 @@
+/* ========================================================
+   Chiroro · 二次元风格 Landing 首页
+   结构：全屏背景层 / 左（头像+名字+一言） / 右（时钟+入口）
+   ======================================================== */
+
+@font-face {
+  font-family: "Great Vibes";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/home/fonts/great-vibes-latin.woff2") format("woff2");
+}
+
+:root {
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.78);
+  --ink-mute: rgba(255, 255, 255, 0.55);
+  --glass: rgba(255, 255, 255, 0.12);
+  --glass-strong: rgba(255, 255, 255, 0.2);
+  --edge: rgba(255, 255, 255, 0.22);
+  --edge-hot: rgba(255, 255, 255, 0.5);
+  --blur: 18px;
+  --radius: 20px;
+  --shadow: 0 18px 50px -18px rgba(3, 8, 24, 0.7);
+  --ease: cubic-bezier(0.22, 0.68, 0.3, 1);
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: #0b1020;
+  color: var(--ink);
+  font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------------- 背景 ---------------- */
+
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bg-layer {
+  position: absolute;
+  inset: -2%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.04);
+  filter: saturate(1.06) contrast(1.03);
+  transition: opacity 1.4s ease;
+  will-change: opacity, transform;
+}
+
+.bg-layer.is-active { opacity: 1; }
+
+.bg-layer.is-active.animate {
+  animation: kenburns 26s var(--ease) infinite alternate;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1.02) translate3d(0, 0, 0); }
+  to   { transform: scale(1.11) translate3d(-1.4%, -1.2%, 0); }
+}
+
+/* 压暗 + 冷色调，保证白色文字始终可读 */
+.bg-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 78% 12%, rgba(130, 180, 255, 0.14), transparent 55%),
+    linear-gradient(115deg, rgba(6, 11, 28, 0.66) 0%, rgba(8, 14, 34, 0.26) 46%, rgba(5, 9, 24, 0.62) 100%);
+}
+
+/* 背景切换按钮 + 页脚固定在底部 */
+.shuffle,
+.foot { position: fixed; z-index: 3; }
+
+/* ---------------- 主结构 ---------------- */
+
+.stage {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: clamp(28px, 6vh, 72px) clamp(22px, 5vw, 64px) 96px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 72px);
+}
+
+/* ---------------- 左：头像 / 名字 ---------------- */
+
+.hero {
+  text-align: center;
+  animation: rise 0.9s var(--ease) both;
+}
+
+.avatar {
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.95), rgba(150, 205, 255, 0.55));
+  box-shadow: 0 16px 44px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transition: transform 0.6s var(--ease);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar:hover { transform: rotate(-6deg) scale(1.04); }
+
+.brand {
+  margin: 0;
+  font-family: "Great Vibes", "Segoe Script", "Snell Roundhand", "Brush Script MT", cursive;
+  font-size: clamp(58px, 7.4vw, 96px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+.tagline {
+  margin: 14px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  color: var(--ink-soft);
+}
+
+.tagline::before,
+.tagline::after {
+  content: "";
+  display: inline-block;
+  width: 26px;
+  height: 1px;
+  margin: 0 12px 3px;
+  background: currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
+}
+
+/* 社交圆钮 */
+.socials {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 30px 0 0;
+  padding: 0;
+}
+
+.socials a {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  transition: transform 0.35s var(--ease), background 0.35s, border-color 0.35s;
+}
+
+.socials a:hover,
+.socials a:focus-visible {
+  transform: translateY(-3px);
+  background: var(--glass-strong);
+  border-color: var(--edge-hot);
+}
+
+.socials svg { width: 19px; height: 19px; fill: currentColor; }
+
+/* ---------------- 右：面板 ---------------- */
+
+.panels {
+  display: grid;
+  gap: 16px;
+  animation: rise 1.05s 0.08s var(--ease) both;
+}
+
+.card,
+.link-card {
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(155%);
+  backdrop-filter: blur(var(--blur)) saturate(155%);
+  box-shadow: var(--shadow);
+  transition: transform 0.4s var(--ease), background 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+  .card, .link-card, .socials a, .shuffle {
+    background: rgba(18, 26, 52, 0.66);
+  }
+}
+
+.card:hover,
+.link-card:hover,
+.link-card:focus-visible {
+  transform: translateY(-4px);
+  background: var(--glass-strong);
+  border-color: var(--edge-hot);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* 一言 */
+.quote {
+  position: relative;
+  padding: 24px 28px 22px;
+  overflow: hidden;
+}
+
+.quote-glyph {
+  position: absolute;
+  top: 2px;
+  left: 16px;
+  font-family: Georgia, serif;
+  font-size: 64px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+
+.quote-text {
+  margin: 0;
+  padding-left: 30px;
+  font-size: 15px;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.94);
+  min-height: 3.8em;
+  transition: opacity 0.5s ease, transform 0.5s var(--ease);
+}
+
+.quote-from {
+  margin: 10px 0 0;
+  padding-left: 30px;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  text-align: right;
+  transition: opacity 0.5s ease;
+}
+
+.quote.is-switching .quote-text,
+.quote.is-switching .quote-from { opacity: 0; transform: translateY(-4px); }
+
+/* 时间 / 天气 */
+.clock-card {
+  padding: 22px 24px 20px;
+  text-align: center;
+}
+
+.date {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: var(--ink-soft);
+}
+
+.clock {
+  margin: 6px 0 4px;
+  font-family: "SFMono-Regular", "JetBrains Mono", Consolas, "Courier New", monospace;
+  font-size: clamp(32px, 3.6vw, 44px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 28px rgba(150, 210, 255, 0.35);
+}
+
+.weather {
+  margin: 0;
+  min-height: 18px;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+
+/* 快捷入口 */
+.links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.link-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  font-size: 14px;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+
+.link-card svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  opacity: 0.9;
+}
+
+/* ---------------- 背景切换按钮 ---------------- */
+
+.shuffle {
+  right: clamp(16px, 3vw, 34px);
+  bottom: clamp(16px, 3vw, 30px);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  cursor: pointer;
+  transition: color 0.3s, background 0.3s, border-color 0.3s, transform 0.3s var(--ease);
+}
+
+.shuffle svg { width: 15px; height: 15px; }
+
+.shuffle:hover,
+.shuffle:focus-visible {
+  color: var(--ink);
+  background: var(--glass-strong);
+  border-color: var(--edge-hot);
+  transform: translateY(-2px);
+}
+
+.shuffle:active svg { transform: rotate(180deg); transition: transform 0.4s var(--ease); }
+
+/* ---------------- 页脚 ---------------- */
+
+.foot {
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---------------- 动效 ---------------- */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------------- 响应式 ---------------- */
+
+@media (max-width: 900px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 34px;
+    padding-bottom: 110px;
+  }
+
+  .avatar { width: 112px; height: 112px; }
+
+  .quote-text { min-height: 0; }
+
+  .foot { bottom: 58px; font-size: 11px; }
+}
+
+@media (max-width: 420px) {
+  .tagline { letter-spacing: 0.28em; font-size: 12px; }
+  .tagline::before, .tagline::after { width: 16px; margin: 0 8px 3px; }
+  .link-card { padding: 14px; font-size: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-layer.is-active.animate { animation: none; }
+  .hero, .panels { animation: none; }
+  .avatar:hover { transform: none; }
+  * { transition-duration: 0.01ms !important; }
+}
+
+/* 键盘可达性 */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(154, 214, 255, 0.9);
+  outline-offset: 3px;
+}
