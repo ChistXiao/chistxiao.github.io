@@ -8,9 +8,9 @@
   "use strict";
 
   var CONFIG = {
-    // 背景图来源池：每次刷新随机取一个（接口失败会依次换，最后用本地图兜底）
+    // 背景图来源池：每次刷新随机取一个（moey 图床，每次 302 到随机图）
     sources: [
-      "https://www.loliapi.com/acg/"
+      "https://www.moey.cn/pic/?type=img&form=auto"
     ],
     // 所有来源都失败时的本地兜底背景
     backgrounds: [
@@ -208,36 +208,113 @@
     setInterval(tick, 1000);
   })();
 
+  /* ------------------------- 顶部问候 ------------------------- */
+
+  (function initGreeting() {
+    var el = document.getElementById("greet");
+    var word = document.getElementById("greetWord");
+    if (!el || !word) return;
+
+    var h = new Date().getHours();
+    var text = h < 5 ? "凌晨好"
+      : h < 9 ? "早上好"
+      : h < 11 ? "上午好"
+      : h < 13 ? "中午好"
+      : h < 18 ? "下午好"
+      : "晚上好";
+
+    word.textContent = text;
+
+    setTimeout(function () { el.classList.add("is-visible"); }, 250);
+    setTimeout(function () { el.classList.remove("is-visible"); }, 5600);
+  })();
+
   /* ------------------------- 一言 ------------------------- */
 
   (function initQuote() {
-    var box = document.querySelector(".quote");
+    var box = document.getElementById("quoteCard") || document.querySelector(".quote");
     var elText = document.getElementById("quoteText");
     var elFrom = document.getElementById("quoteFrom");
-    if (!box || !elText || !CONFIG.quotes.length) return;
+    if (!box || !elText) return;
 
-    var last = Math.floor(Math.random() * CONFIG.quotes.length);
+    function toItem(raw) {
+      if (raw && typeof raw === "object" && raw.t) {
+        return { t: String(raw.t), f: raw.f || "" };
+      }
+      var str = String(raw);
+      var i = str.indexOf("\u2014\u2014");
+      if (i === -1) return { t: str.trim(), f: "" };
+      return { t: str.slice(0, i).trim(), f: "\u2014 " + str.slice(i + 2).trim() };
+    }
 
-    function render(index) {
-      var item = CONFIG.quotes[index];
+    var pool = CONFIG.quotes.map(function (q) {
+      return typeof q === "string" ? toItem(q) : q;
+    });
+    var current = Math.floor(Math.random() * Math.max(pool.length, 1));
+    var autoTimer = null;
+
+    function render(item) {
       elText.textContent = item.t;
       if (elFrom) elFrom.textContent = item.f || "";
     }
 
-    render(last);
-
-    function show(index) {
+    function show(item) {
       box.classList.add("is-switching");
       setTimeout(function () {
-        render(index);
+        render(item);
         box.classList.remove("is-switching");
-      }, reduceMotion ? 0 : 260);
+      }, reduceMotion ? 0 : 240);
     }
 
-    setInterval(function () {
-      last = (last + 1 + Math.floor(Math.random() * (CONFIG.quotes.length - 1))) % CONFIG.quotes.length;
-      show(last);
-    }, CONFIG.quoteInterval);
+    function pickNext() {
+      if (pool.length < 2) return 0;
+      var next = current;
+      while (next === current) next = Math.floor(Math.random() * pool.length);
+      return next;
+    }
+
+    function restartAuto() {
+      clearInterval(autoTimer);
+      if (CONFIG.quoteInterval > 0) {
+        autoTimer = setInterval(function () {
+          current = pickNext();
+          show(pool[current]);
+        }, CONFIG.quoteInterval);
+      }
+    }
+
+    // 首屏立即有内容，避免空白
+    render(pool[current]);
+    restartAuto();
+
+    function next() {
+      current = pickNext();
+      show(pool[current]);
+      restartAuto();
+    }
+
+    // 点击 / 回车 / 空格换下一句
+    box.addEventListener("click", next);
+    box.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        next();
+      }
+    });
+
+    // 构建时从接口抓好的 JSON（接口无 CORS，不在浏览器直接请求）
+    fetch("/home/quotes.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (list) {
+        if (!Array.isArray(list)) return;
+        var items = list.map(toItem).filter(function (it) { return it && it.t; });
+        if (!items.length) return;
+        pool = items;
+        current = Math.floor(Math.random() * pool.length);
+        render(pool[current]);
+        restartAuto();
+      })
+      .catch(function () { /* 接口没抓到就保留兜底文案 */ });
   })();
 
   /* ------------------------- 右侧覆盖层（头像简介 / 名字时间进度） ------------------------- */

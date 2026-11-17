@@ -243,7 +243,10 @@ body {
   position: relative;
   padding: 24px 28px 22px;
   overflow: hidden;
+  cursor: pointer;
 }
+
+.quote:active { transform: translateY(-1px); }
 
 .quote-glyph {
   position: absolute;
@@ -487,6 +490,51 @@ body {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* ---------------- 进入页面时的顶部问候 ---------------- */
+
+.greet {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px 9px 13px;
+  border-radius: 999px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(92, 98, 112, 0.55);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+  backdrop-filter: blur(10px) saturate(130%);
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.65);
+  transform: translate(-50%, -14px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+
+.greet.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.greet-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #4a4f5c;
+  font: 700 13px/20px "Times New Roman", Georgia, serif;
+  text-align: center;
+  font-style: italic;
+}
+
+.greet-text b { font-weight: 700; }
 
 /* ---------------- 页脚 ---------------- */
 

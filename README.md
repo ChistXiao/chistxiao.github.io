@@ -30,12 +30,18 @@ pnpm run build   # 生成到 public/
 | 头像 | 替换 `source/home/avatar.png`（会同时作为 favicon） |
 | 头像点击后的简介文字 | `source/index.html` 里 `.note` 区块 |
 | 名字 / 社交链接 | `source/index.html`（`.brand`、`.socials`） |
-| 背景来源池 | `source/home/landing.js` → `CONFIG.sources` |
+| 背景来源池 | `source/home/landing.js` → `CONFIG.sources`（默认 `https://www.moey.cn/pic/?type=img&form=auto`） |
 | 兜底背景（接口全挂时） | `source/home/bg/bg1-8.webp` |
 | 鼠标视差幅度 | `CONFIG.parallax`（默认 14px） |
-| 一言文案 / 间隔 | `CONFIG.quotes`、`CONFIG.quoteInterval` |
+| 一言来源 / 间隔 | `scripts/fetch-quotes.js`（构建时抓取）、`CONFIG.quoteInterval` |
 | 天气城市（留空=按 IP 定位） | `CONFIG.city` |
 | 毛玻璃：透明度 / 模糊半径 | `source/home/landing.css` 的 `--glass-top`、`--glass-bottom`、`--blur` |
+
+## 一言与背景接口
+
+- **背景**：`https://www.moey.cn/pic/?type=img&form=auto`，每次请求 302 到一张随机图，直接用 `<img>`/CSS 背景加载（不需要 CORS）。
+- **一言**：`https://www.moey.cn/yan/?type=json&form=all`。这个接口**没有 CORS 头**，浏览器直连会被拦，所以改为**构建时抓取**：`pnpm run build` 会先跑 `scripts/fetch-quotes.js` 抓 40 条写入 `source/home/quotes.json`，页面再从本地 JSON 随机取。每次部署都会刷新这批句子；接口挂掉时保留上一次的文件。
+- 点击一言卡片（或聚焦后按回车/空格）随机换下一句。
 
 ## 结构
 

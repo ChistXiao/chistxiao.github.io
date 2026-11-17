@@ -18,6 +18,11 @@
     <div class="bg-veil"></div>
   </div>
 
+  <div class="greet" id="greet" role="status" aria-live="polite">
+    <span class="greet-icon" aria-hidden="true">i</span>
+    <span class="greet-text"><b id="greetWord">凌晨好</b> 欢迎来到我的主页</span>
+  </div>
+
   <main class="stage">
 
     <section class="hero">
@@ -54,7 +59,8 @@
 
     <section class="panels" id="panels">
 
-      <article class="card quote" aria-label="随机一言">
+      <article class="card quote" id="quoteCard" role="button" tabindex="0"
+               aria-label="一言，点击换下一句" title="点击换一句">
         <span class="quote-glyph" aria-hidden="true">“</span>
         <p class="quote-text" id="quoteText">加载中…</p>
         <p class="quote-from" id="quoteFrom"></p>
@@ -69,7 +75,7 @@
       <!-- 点击头像后覆盖在右侧控件上的简介 -->
       <div class="note" id="note" role="region" aria-label="简介">
         <p class="note-title">你好  我是 ChistXiao</p>
-        <p class="note-body">一个喜欢折腾并且认识国内绝大多数圈子的人</p>
+        <p class="note-body">一个喜欢折腾的人</p>
         <p class="note-body">如果你能看见这个  那我们大概已经认识<br>这里是我的blog主页  目前是一个简单的展示页<br>欢迎通过头像下面的方式找到我</p>
         <p class="note-ps">ps:联系不到也很正常  平时大多数时间在QQ水群...</p>
         <p class="note-hint">再点一下头像关闭</p>
