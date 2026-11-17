@@ -25,7 +25,11 @@
         <img src="/home/avatar.png" alt="ChistXiao">
       </button>
 
-      <h1 class="brand">ChistXiao</h1>
+      <h1 class="brand-h">
+        <button class="brand" id="nameBtn" type="button"
+                aria-expanded="false" aria-controls="progress"
+                aria-label="查看时间进度">ChistXiao</button>
+      </h1>
 
       <ul class="socials">
         <li>
@@ -64,14 +68,31 @@
 
       <!-- 点击头像后覆盖在右侧控件上的简介 -->
       <div class="note" id="note" role="region" aria-label="简介">
-        <p class="note-title">你好，我是 ChistXiao</p>
-        <p class="note-body">
-          一个喜欢折腾代码和看动画的人。<br>
-          平时写点小工具、折腾各种服务，偶尔把想法记下来。<br>
-          这里是我的主页，用来放一些我在做的事情。<br>
-          想聊天的话，欢迎通过下面的方式找到我。
-        </p>
+        <p class="note-title">你好  我是 ChistXiao</p>
+        <p class="note-body">一个喜欢折腾并且认识国内绝大多数圈子的人</p>
+        <p class="note-body">如果你能看见这个  那我们大概已经认识<br>这里是我的blog主页  目前是一个简单的展示页<br>欢迎通过头像下面的方式找到我</p>
+        <p class="note-ps">ps:联系不到也很正常  平时大多数时间在QQ水群...</p>
         <p class="note-hint">再点一下头像关闭</p>
+      </div>
+
+      <!-- 点击名字后覆盖在右侧控件上的时间进度 -->
+      <div class="progress" id="progress" role="region" aria-label="时间进度">
+        <div class="prog-row" id="rowDay">
+          <div class="prog-head"><span class="prog-title">今日已度过 <b>0</b> 小时</span><span class="prog-rest">剩余 24 小时</span></div>
+          <div class="prog-bar"><span class="prog-fill"></span><span class="prog-label">0%</span></div>
+        </div>
+        <div class="prog-row" id="rowWeek">
+          <div class="prog-head"><span class="prog-title">本周已度过 <b>0</b> 天</span><span class="prog-rest">剩余 7 天</span></div>
+          <div class="prog-bar"><span class="prog-fill"></span><span class="prog-label">0%</span></div>
+        </div>
+        <div class="prog-row" id="rowMonth">
+          <div class="prog-head"><span class="prog-title">本月已度过 <b>0</b> 天</span><span class="prog-rest">剩余 30 天</span></div>
+          <div class="prog-bar"><span class="prog-fill"></span><span class="prog-label">0%</span></div>
+        </div>
+        <div class="prog-row" id="rowYear">
+          <div class="prog-head"><span class="prog-title">本年已度过 <b>0</b> 天</span><span class="prog-rest">剩余 365 天</span></div>
+          <div class="prog-bar"><span class="prog-fill"></span><span class="prog-label">0%</span></div>
+        </div>
       </div>
 
     </section>

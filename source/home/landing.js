@@ -10,9 +10,7 @@
   var CONFIG = {
     // 背景图来源池：每次刷新随机取一个（接口失败会依次换，最后用本地图兜底）
     sources: [
-      "https://api.rls.ovh/api/anime/auto",
-      "https://api.rls.ovh/api/anime/pc",
-      "https://api.rls.ovh/api/anime/pe"
+      "https://www.loliapi.com/acg/"
     ],
     // 所有来源都失败时的本地兜底背景
     backgrounds: [
@@ -242,25 +240,107 @@
     }, CONFIG.quoteInterval);
   })();
 
-  /* ------------------------- 头像展开简介 ------------------------- */
+  /* ------------------------- 右侧覆盖层（头像简介 / 名字时间进度） ------------------------- */
 
-  (function initNote() {
+  (function initPanels() {
     var avatar = document.getElementById("avatar");
+    var nameBtn = document.getElementById("nameBtn");
     var note = document.getElementById("note");
-    if (!avatar || !note) return;
+    var progress = document.getElementById("progress");
+    if (!note || !progress) return;
 
-    function toggle(open) {
-      var next = typeof open === "boolean" ? open : !note.classList.contains("is-open");
-      note.classList.toggle("is-open", next);
-      avatar.setAttribute("aria-expanded", String(next));
-      avatar.setAttribute("aria-label", next ? "收起简介" : "展开简介");
+    var cards = [note, progress];
+    var buttons = {};
+    if (avatar) buttons.note = avatar;
+    if (nameBtn) buttons.progress = nameBtn;
+
+    function setOpen(target, open) {
+      target.classList.toggle("is-open", open);
+      var btn = buttons[target === note ? "note" : "progress"];
+      if (btn) btn.setAttribute("aria-expanded", String(open));
     }
 
-    avatar.addEventListener("click", function () { toggle(); });
+    function closeOthers(keep) {
+      cards.forEach(function (el) { if (el !== keep) setOpen(el, false); });
+    }
+
+    function toggle(target) {
+      var open = !target.classList.contains("is-open");
+      setOpen(target, open);
+      if (open) closeOthers(target);
+      if (open && target === progress) renderProgress();
+    }
+
+    avatar && avatar.addEventListener("click", function () { toggle(note); });
+    nameBtn && nameBtn.addEventListener("click", function () {
+      toggle(progress);
+      if (progress.classList.contains("is-open")) startTicking();
+    });
 
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") toggle(false);
+      if (e.key === "Escape") cards.forEach(function (el) { setOpen(el, false); });
     });
+
+    /* ---- 时间进度计算：今日 / 本周 / 本月 / 本年 ---- */
+
+    var DAY = 86400000;
+
+    function dayOfYear(d) {
+      var start = Date.UTC(d.getFullYear(), 0, 1);
+      var cur = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+      return Math.round((cur - start) / DAY) + 1; // 从 1 开始
+    }
+
+    function fill(row, elapsed, total, unit) {
+      var rest = total - elapsed;
+      var pct = total ? (elapsed / total) * 100 : 0;
+      var title = row.querySelector(".prog-title");
+      var restEl = row.querySelector(".prog-rest");
+      var bar = row.querySelector(".prog-bar");
+      var fillEl = row.querySelector(".prog-fill");
+      var label = row.querySelector(".prog-label");
+
+      title.innerHTML = row.dataset.label + "已度过 <b>" + elapsed + "</b> " + unit;
+      restEl.textContent = "剩余 " + rest + " " + unit;
+      fillEl.style.width = pct.toFixed(2) + "%";
+      label.textContent = pct.toFixed(2) + "%";
+      bar.classList.toggle("is-dark", pct >= 50);
+    }
+
+    function renderProgress() {
+      var now = new Date();
+      var y = now.getFullYear();
+      var isLeap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+
+      var rows = {
+        day: document.getElementById("rowDay"),
+        week: document.getElementById("rowWeek"),
+        month: document.getElementById("rowMonth"),
+        year: document.getElementById("rowYear")
+      };
+      if (!rows.day) return;
+
+      rows.day.dataset.label = "今日";
+      rows.week.dataset.label = "本周";
+      rows.month.dataset.label = "本月";
+      rows.year.dataset.label = "本年";
+
+      fill(rows.day, now.getHours(), 24, "小时");
+      fill(rows.week, (now.getDay() + 6) % 7, 7, "天");
+      fill(rows.month, now.getDate() - 1, new Date(y, now.getMonth() + 1, 0).getDate(), "天");
+      fill(rows.year, dayOfYear(now) - 1, isLeap ? 366 : 365, "天");
+    }
+
+    var ticker = null;
+    function startTicking() {
+      renderProgress();
+      if (ticker) return;
+      ticker = setInterval(function () {
+        if (progress.classList.contains("is-open")) renderProgress();
+      }, 60000);
+    }
+
+    renderProgress(); // 先算好，打开时直接显示
   })();
 
   /* ------------------------- 邮箱一键复制 ------------------------- */
